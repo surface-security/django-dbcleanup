@@ -1,0 +1,11 @@
+# file set with Dockerfile.mysql (for run_tests script) in mind - review if used for anything else
+.jenkins
+**/.coverage
+**/__pycache__
+**/*.pyc
+dist
+*.egg-info
+.git
+.reports
+.dockerignore
+**/.pytest_cache

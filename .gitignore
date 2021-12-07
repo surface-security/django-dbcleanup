@@ -1,0 +1,9 @@
+*.pyc
+__pycache__
+/dist
+/build
+*.egg-info
+.coverage
+.reports
+.pytest_cache
+.vscode
