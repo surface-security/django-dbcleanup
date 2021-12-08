@@ -12,7 +12,10 @@ from django.conf import settings
 from dbcleanup import utils, models, admin
 
 
-@unittest.skipUnless(settings.DATABASES['default']['ENGINE'] in ('django.db.backends.mysql', 'django.db.backends.postgresql_psycopg2'), "only mysql and postgresql")
+@unittest.skipUnless(
+    settings.DATABASES['default']['ENGINE'] in ('django.db.backends.mysql', 'django.db.backends.postgresql_psycopg2'),
+    "only mysql and postgresql",
+)
 class Test(TestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -29,11 +32,21 @@ class Test(TestCase):
         self.assertEqual(
             sorted(models.Table.objects.values_list('name', flat=True)),
             [
-                'auth_group', 'auth_group_permissions', 'auth_permission',
-                'auth_user', 'auth_user_groups', 'auth_user_user_permissions',
-                'django_admin_log', 'django_content_type', 'django_migrations',
-                'django_session', 'testapp_bread', 'testapp_food',
-                'testapp_food_notes', 'testapp_foodmonster', 'testapp_note',
+                'auth_group',
+                'auth_group_permissions',
+                'auth_permission',
+                'auth_user',
+                'auth_user_groups',
+                'auth_user_user_permissions',
+                'django_admin_log',
+                'django_content_type',
+                'django_migrations',
+                'django_session',
+                'testapp_bread',
+                'testapp_food',
+                'testapp_food_notes',
+                'testapp_foodmonster',
+                'testapp_note',
             ],
         )
 
