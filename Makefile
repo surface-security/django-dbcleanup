@@ -50,7 +50,7 @@ testpg: startpg
 test: startmysql
 	testapp/manage.py test $${TEST_ARGS:-tests}
 
-coverage: startmysql
+coverage:
 	PYTHONPATH="testapp" \
 		python -b -W always -m coverage run testapp/manage.py test $${TEST_ARGS:-tests}
 	coverage report
