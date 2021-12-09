@@ -82,9 +82,7 @@ testapp.Bread cleanup aborted as it would cascade to:
         self.assertEqual(err.getvalue(), '')
         self.assertEqual(Bread.objects.count(), 0)
 
-    @override_settings(
-        DBCLEANUP_HISTORY_MODELS=[(('testapp', 'bread'), 10, 'last_eaten')]
-    )
+    @override_settings(DBCLEANUP_HISTORY_MODELS=[(('testapp', 'bread'), 10, 'last_eaten')])
     def test_delete_m2m_cascade(self):
         note = Note.objects.create(message='random', time=timezone.now())
         bread = Bread.objects.create(last_eaten=timezone.now() - timezone.timedelta(days=20))

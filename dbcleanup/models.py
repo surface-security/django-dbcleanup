@@ -4,11 +4,17 @@ from django.conf import settings
 
 
 def _choose_model():
-    # would this be cleaner in a 
+    # would this be cleaner in a
     if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+
         class TableManager(models.Manager):
             def get_queryset(self):
-                return super().get_queryset().filter(schema=RawSQL('DATABASE()', [])).annotate(size=RawSQL('data_length + index_length', []))
+                return (
+                    super()
+                    .get_queryset()
+                    .filter(schema=RawSQL('DATABASE()', []))
+                    .annotate(size=RawSQL('data_length + index_length', []))
+                )
 
         class MySQLTable(models.Model):
             objects = TableManager()
@@ -31,6 +37,7 @@ def _choose_model():
 
             def __str__(self) -> str:
                 return f'{self.schema}.{self.name}'
+
         return MySQLTable
 
     if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
@@ -48,17 +55,23 @@ def _choose_model():
             WHERE relkind = 'r' and nspname = 'public';
         ```
         """
+
         class TableManager(models.Manager):
             def get_queryset(self):
-                return super().get_queryset().annotate(
-                    size=RawSQL('pg_total_relation_size(pg_class.oid)', []),
-                    # pg_column_size does not seem to be the same...
-                    avg_row_length=RawSQL('NULL', []),
-                    data_length=RawSQL('pg_relation_size(pg_class.oid)', []),
-                    # PG equivalent for this...? any use for it anyway?
-                    max_data_length=RawSQL('NULL', []),
-                    index_length=RawSQL('pg_indexes_size(pg_class.oid)', []),
-                ).filter(schema__nspname='public', relkind='r')
+                return (
+                    super()
+                    .get_queryset()
+                    .annotate(
+                        size=RawSQL('pg_total_relation_size(pg_class.oid)', []),
+                        # pg_column_size does not seem to be the same...
+                        avg_row_length=RawSQL('NULL', []),
+                        data_length=RawSQL('pg_relation_size(pg_class.oid)', []),
+                        # PG equivalent for this...? any use for it anyway?
+                        max_data_length=RawSQL('NULL', []),
+                        index_length=RawSQL('pg_indexes_size(pg_class.oid)', []),
+                    )
+                    .filter(schema__nspname='public', relkind='r')
+                )
 
         class PGNameSpace(models.Model):
             oid = models.IntegerField(primary_key=True)
@@ -71,7 +84,6 @@ def _choose_model():
             def __str__(self) -> str:
                 return f'{self.schema}.{self.name}'
 
-
         class PGTable(models.Model):
             objects = TableManager()
             all_tables = models.Manager()
@@ -79,7 +91,7 @@ def _choose_model():
             name = models.CharField(max_length=64, primary_key=True, db_column='relname')
             schema = models.ForeignKey(PGNameSpace, db_column='relnamespace', on_delete=models.CASCADE)
             relkind = models.CharField(max_length=255, null=True)
-            
+
             rows = models.PositiveBigIntegerField(null=True, db_column='reltuples')
 
             class Meta:
@@ -88,9 +100,22 @@ def _choose_model():
 
             def __str__(self) -> str:
                 return f'{self.schema}.{self.name}'
-        return PGTable
-    return None
 
+        return PGTable
+
+    class NoTable(models.Model):
+        """
+        bogus to allow projects to run with unsupported DB engines
+        (but without any functionality from this app)
+        """
+
+        name = models.CharField(max_length=64, primary_key=True)
+        rows = models.PositiveBigIntegerField(null=True)
+
+        class Meta:
+            managed = False
+
+    return NoTable
 
 
 class Table(_choose_model()):

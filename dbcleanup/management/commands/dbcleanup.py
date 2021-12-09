@@ -38,7 +38,10 @@ class Command(BaseCommand):
         :param options:
         :return:
         """
-        if settings.DATABASES['default']['ENGINE'] not in ('django.db.backends.mysql', 'django.db.backends.postgresql_psycopg2'):
+        if settings.DATABASES['default']['ENGINE'] not in (
+            'django.db.backends.mysql',
+            'django.db.backends.postgresql_psycopg2',
+        ):
             raise CommandError('this is only for mysql and postgresql')
         self._handle_tables(options)
 
@@ -76,11 +79,13 @@ class Command(BaseCommand):
         # allow cascading to parent models (otherwise children can never be deleted...)
         _allow = {x._meta.label for x in query.model._meta.parents.keys()}
         # allow cascading to M2M intermediary models
-        _allow.update({
-            f.remote_field.through._meta.label
-            for f in query.model._meta.get_fields()
-            if isinstance(f, ManyToManyField)
-        })
+        _allow.update(
+            {
+                f.remote_field.through._meta.label
+                for f in query.model._meta.get_fields()
+                if isinstance(f, ManyToManyField)
+            }
+        )
         # allow itself to be deleted, ofc!
         _allow.add(query.model._meta.label)
         # append the custom ones, if any
