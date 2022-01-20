@@ -5,8 +5,13 @@ from functools import lru_cache
 
 @lru_cache()
 def model_tables():
+    from .models import Table
+
     tables_in_use = {}
     for m in registry.apps.get_models():
+        if m == Table:
+            # skip ourselves
+            continue
         if not m._meta.managed:
             # skip models not managed by django
             continue
