@@ -11,6 +11,7 @@ APP_SETTINGS = {
 
 class DBCleanupConfig(AppConfig):
     name = 'dbcleanup'
+    default_auto_field = 'django.db.models.AutoField'
 
     def ready(self):
         super().ready()
