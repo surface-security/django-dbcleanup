@@ -40,7 +40,10 @@ def _choose_model():
 
         return MySQLTable
 
-    if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
+    if settings.DATABASES['default']['ENGINE'] in (
+        'django.db.backends.postgresql_psycopg2',
+        'django.db.backends.postgresql',
+    ):
         """
         based on https://wiki.postgresql.org/wiki/Disk_Usage
 
