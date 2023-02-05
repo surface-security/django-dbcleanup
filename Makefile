@@ -40,7 +40,7 @@ startpg:
 				   --health-interval 10s \
 				   --health-timeout 5s \
 				   --health-retries 5 \
-				   postgres:10
+				   postgres:11-alpine
 	until [ "`docker inspect -f {{.State.Health.Status}} ${TEST_CONTAINER}-pg`" == "healthy" ]; do sleep 0.1; done;
 
 testpg: startpg
