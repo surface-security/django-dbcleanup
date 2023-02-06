@@ -3,14 +3,14 @@ TEST_CONTAINER := django-dbcleanup-test
 
 .PHONY: style
 style:
-	black --target-version=py36 \
+	black --target-version=py37 \
 	      --line-length=120 \
 		  --skip-string-normalization \
 		  dbcleanup testapp setup.py
 
 .PHONY: style_check
 style_check:
-	black --target-version=py36 \
+	black --target-version=py37 \
 	      --line-length=120 \
 		  --skip-string-normalization \
 		  --check \
@@ -40,7 +40,7 @@ startpg:
 				   --health-interval 10s \
 				   --health-timeout 5s \
 				   --health-retries 5 \
-				   postgres:10
+				   postgres:11-alpine
 	until [ "`docker inspect -f {{.State.Health.Status}} ${TEST_CONTAINER}-pg`" == "healthy" ]; do sleep 0.1; done;
 
 testpg: startpg
