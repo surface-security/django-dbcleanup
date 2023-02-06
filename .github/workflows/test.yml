@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        database: [sqlite, mysql, postgresql]
+        database: [sqlite, mysql, postgresql12, postgres15]
 
     services:
       mysql:
@@ -39,7 +39,17 @@ jobs:
         - 8877:3306
         # needed because the container does not provide a healthcheck
         options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries=5
-      postgres:
+      postgres12:
+        image: postgres:12-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+        - 8878:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      postgres15:
         image: postgres:12-alpine
         env:
           POSTGRES_USER: postgres
