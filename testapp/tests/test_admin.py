@@ -5,7 +5,7 @@ from django.urls import reverse
 
 class Test(TestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create_user('tester', 'tester@ppb.it', 'tester')
+        self.user = get_user_model().objects.create_user('tester', 'tester@test.it', 'tester')
 
     def test_changelist(self):
         """
