@@ -103,14 +103,21 @@ def _choose_model():
 
         return PGTable
 
+    class TableManager(models.Manager):
+        def get_queryset(self):
+            return super().get_queryset().none()
+
     class NoTable(models.Model):
         """
         bogus to allow projects to run with unsupported DB engines
         (but without any functionality from this app)
         """
 
+        objects = TableManager()
+
         name = models.CharField(max_length=64, primary_key=True)
         rows = models.PositiveBigIntegerField(null=True)
+        size = models.IntegerField(default=0)
 
         class Meta:
             managed = False
