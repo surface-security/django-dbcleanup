@@ -1,7 +1,7 @@
 from django.core.management import CommandError, BaseCommand
 from django.conf import settings
 from django.db import connection, transaction
-from django.db.models import ManyToManyField
+from django.db.models import ManyToManyField, Max, Min, Q
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.db.migrations.loader import MigrationLoader
@@ -9,6 +9,7 @@ from django.db.migrations.loader import MigrationLoader
 from dbcleanup import utils, models
 
 REQUIRED_TABLES = {'django_migrations'}
+BATCH_SIZE = 5000
 
 
 class Command(BaseCommand):
@@ -139,21 +140,52 @@ class Command(BaseCommand):
             ct = ContentType.objects.get_by_natural_key(*model_tuple)
             # normalize model name to match against .delete() return labels (and for capitalized printing!)
             model = ct.model_class()._meta.label
-            q = ct.get_all_objects_for_this_type(**{f'{field}__lt': timezone.now() - timezone.timedelta(days=log_size)})
+            q = ct.get_all_objects_for_this_type()
+            filtered = q.filter(
+                **{f"{field}__lt": timezone.now() - timezone.timedelta(days=log_size)}
+            ).aggregate(Min("id"), Max("id"))
+            min_id = filtered["id__min"]
+            max_id = filtered["id__max"]
+            rows_deleted = {}
 
-            try:
-                deleted, rows_deleted = self._clean_history_intention(model, q, options)
-            except CascadeException as e:
-                _exit = 1
-                self.stderr.write(f'{model} cleanup aborted as it would cascade to:\n')
-                self._clean_history_print(e.args[2].items(), err=True)
-                continue
+            while True:
+                batch = q.filter(
+                    Q(id__lte=min_id + BATCH_SIZE),
+                    Q(id__gte=min_id),
+                    Q(
+                        **{
+                            f"{field}__lt": timezone.now()
+                            - timezone.timedelta(days=log_size)
+                        }
+                    ),
+                )
+                if batch:
+                    try:
+                        deleted, batch_rows_deleted = self._clean_history_intention(
+                            model, batch, options
+                        )
+                        for k, v in batch_rows_deleted.items():
+                            if rows_deleted.get(k):
+                                rows_deleted[k] = rows_deleted[k] + v
+                            else:
+                                rows_deleted.update(batch_rows_deleted)
+                                break
 
+                    except CascadeException as e:
+                        _exit = 1
+                        self.stderr.write(
+                            f"{model} cleanup aborted as it would cascade to:\n"
+                        )
+                        self._clean_history_print(e.args[2].items(), err=True)
+                        continue
+                min_id += BATCH_SIZE
+                if min_id > max_id:
+                    break
             if deleted:
-                if options['force'] or options['interactive']:
-                    self.stdout.write(f'{model} cleanup deleted:\n')
+                if options["force"] or options["interactive"]:
+                    self.stdout.write(f"{model} cleanup deleted:\n")
                 else:
-                    self.stdout.write(f'{model} cleanup would delete:\n')
+                    self.stdout.write(f"{model} cleanup would delete:\n")
                 self._clean_history_print(rows_deleted.items())
         return _exit
 
