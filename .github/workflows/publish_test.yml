@@ -6,9 +6,9 @@ name: publish test
 on:
   push:
     branches: 
-    - testpypi
-    - testpypi-*
-    - testpypi/*
+      - testpypi
+      - testpypi-*
+      - testpypi/*
 
 jobs:
   deploy:
