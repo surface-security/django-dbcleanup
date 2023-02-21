@@ -141,9 +141,9 @@ class Command(BaseCommand):
             # normalize model name to match against .delete() return labels (and for capitalized printing!)
             model = ct.model_class()._meta.label
             q = ct.get_all_objects_for_this_type()
-            filtered = q.filter(
-                **{f"{field}__lt": timezone.now() - timezone.timedelta(days=log_size)}
-            ).aggregate(Min("id"), Max("id"))
+            filtered = q.filter(**{f"{field}__lt": timezone.now() - timezone.timedelta(days=log_size)}).aggregate(
+                Min("id"), Max("id")
+            )
             min_id = filtered["id__min"]
             max_id = filtered["id__max"]
             rows_deleted = {}
@@ -152,18 +152,11 @@ class Command(BaseCommand):
                 batch = q.filter(
                     Q(id__lte=min_id + BATCH_SIZE),
                     Q(id__gte=min_id),
-                    Q(
-                        **{
-                            f"{field}__lt": timezone.now()
-                            - timezone.timedelta(days=log_size)
-                        }
-                    ),
+                    Q(**{f"{field}__lt": timezone.now() - timezone.timedelta(days=log_size)}),
                 )
                 if batch:
                     try:
-                        deleted, batch_rows_deleted = self._clean_history_intention(
-                            model, batch, options
-                        )
+                        deleted, batch_rows_deleted = self._clean_history_intention(model, batch, options)
                         for k, v in batch_rows_deleted.items():
                             if rows_deleted.get(k):
                                 rows_deleted[k] = rows_deleted[k] + v
@@ -173,9 +166,7 @@ class Command(BaseCommand):
 
                     except CascadeException as e:
                         _exit = 1
-                        self.stderr.write(
-                            f"{model} cleanup aborted as it would cascade to:\n"
-                        )
+                        self.stderr.write(f"{model} cleanup aborted as it would cascade to:\n")
                         self._clean_history_print(e.args[2].items(), err=True)
                         continue
                 min_id += BATCH_SIZE
