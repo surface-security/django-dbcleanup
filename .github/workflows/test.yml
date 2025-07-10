@@ -40,7 +40,7 @@ jobs:
         # needed because the container does not provide a healthcheck
         options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries=5
       postgres:
-        image: postgres:12-alpine
+        image: postgres:15-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
